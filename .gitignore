@@ -4,6 +4,7 @@
 .env
 
 # dependencies
+/.agents/
 /node_modules
 /.pnp
 .pnp.*
