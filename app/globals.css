@@ -140,3 +140,31 @@ html * {
     @apply font-sans;
   }
 }
+
+/* Streaming message animation */
+@keyframes stream-fade {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.streaming-message {
+  animation: stream-fade 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* Cursor blink for streaming */
+@keyframes cursor-blink {
+  0%,
+  50% {
+    opacity: 1;
+  }
+  51%,
+  100% {
+    opacity: 0;
+  }
+}

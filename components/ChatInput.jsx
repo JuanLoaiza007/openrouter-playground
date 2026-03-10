@@ -21,10 +21,7 @@ export function ChatInput({
           className="min-h-[80px] resize-none"
           disabled={disabled}
         />
-        <div className="flex justify-between items-center">
-          <p className="text-xs text-muted-foreground">
-            Presiona Enter para enviar, Shift+Enter para nueva línea
-          </p>
+        <div className="flex justify-end items-center">
           <Button type="submit" disabled={loading || !value.trim()}>
             {loading ? (
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />

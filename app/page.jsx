@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useChats } from "@/lib/hooks";
 import { useTheme } from "@/lib/useTheme";
-import { sendMessage, exportChat, exportConfig } from "@/lib/api";
+import { sendMessageStream, exportChat, exportConfig } from "@/lib/api";
 import { DEFAULT_MODEL, DEFAULT_PARAMS } from "@/lib/constants";
 import { Loader2, Send, Download, Settings, Trash2 } from "lucide-react";
 
@@ -85,16 +85,32 @@ export default function Home() {
     setError(null);
 
     try {
-      const response = await sendMessage(newMessages, model, {
-        temperature: params.temperature,
-        max_tokens: params.max_tokens,
-        top_p: params.top_p,
-        presence_penalty: params.presence_penalty,
-        frequency_penalty: params.frequency_penalty,
+      // Add placeholder for assistant message
+      const placeholderMessage = { role: "assistant", content: "" };
+      updateChat(activeChat.id, {
+        messages: [...newMessages, placeholderMessage],
       });
 
-      const updatedMessages = [...newMessages, response];
-      updateChat(activeChat.id, { messages: updatedMessages });
+      let finalContent = "";
+
+      await sendMessageStream(
+        newMessages,
+        model,
+        {
+          temperature: params.temperature,
+          max_tokens: params.max_tokens,
+          top_p: params.top_p,
+          presence_penalty: params.presence_penalty,
+          frequency_penalty: params.frequency_penalty,
+        },
+        (content) => {
+          finalContent = content;
+          // Update message incrementally for streaming effect
+          updateChat(activeChat.id, {
+            messages: [...newMessages, { role: "assistant", content }],
+          });
+        },
+      );
 
       if (messages.length === 0) {
         const title =
@@ -296,6 +312,7 @@ export default function Home() {
             messages={messages}
             loading={loading}
             error={error}
+            isStreaming={loading && messages.length > 0}
             onCopy={(text) => navigator.clipboard.writeText(text)}
           />
 

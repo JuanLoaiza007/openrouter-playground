@@ -44,7 +44,6 @@ export function SettingsDialog({
             <Input
               value={model}
               onChange={(e) => onModelChange(e.target.value)}
-              placeholder="anthropic/claude-3.5-sonnet"
             />
             <div className="flex flex-wrap gap-1">
               {POPULAR_MODELS.slice(0, 4).map((m) => (
@@ -71,9 +70,6 @@ export function SettingsDialog({
               onBlur={(e) => onSaveApiKey(e.target.value)}
               placeholder="sk-or-v1-... (dejar vacío para usar .env)"
             />
-            <p className="text-xs text-muted-foreground">
-              Se guarda en localStorage del navegador
-            </p>
           </div>
 
           <hr />
