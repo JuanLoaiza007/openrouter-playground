@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "skills": {
+    "create-agent": {
+      "source": "OpenRouterTeam/agent-skills",
+      "sourceType": "github",
+      "computedHash": "ced8d4f944d0b5afb803720fc4665590eda57c30adfb3ecb493726ba6c66b79c"
+    },
+    "nextjs-shadcn": {
+      "source": "laguagu/claude-code-nextjs-skills",
+      "sourceType": "github",
+      "computedHash": "09deb42e186e0b17603b93c6e3df7b06b136ee76550657a47f37d2cd9022553e"
+    },
+    "shadcn": {
+      "source": "shadcn/ui",
+      "sourceType": "github",
+      "computedHash": "b1cc1defe03f0e8f78652b7d20e4d4e6421babc2b45835d4f361afe684dc47a2"
+    }
+  }
+}
