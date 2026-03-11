@@ -24,12 +24,14 @@ export function SettingsDialog({
   apiKey,
   structuredOutput,
   systemMessage,
+  useHistory,
   onModelChange,
   onParamChange,
   onApiKeyChange,
   onSaveApiKey,
   onStructuredOutputChange,
   onSystemMessageChange,
+  onUseHistoryChange,
   children,
 }) {
   const [schemaInput, setSchemaInput] = useState(
@@ -118,6 +120,24 @@ export function SettingsDialog({
               placeholder="Ej: Eres un asistente que responde en formato JSON..."
               className="min-h-[80px]"
             />
+          </div>
+
+          {/* Use History Toggle */}
+          <div className="flex items-center justify-between">
+            <Label>Usar historial del chat</Label>
+            <button
+              type="button"
+              onClick={() => onUseHistoryChange(!useHistory)}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                useHistory ? "bg-primary" : "bg-muted"
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  useHistory ? "translate-x-6" : "translate-x-1"
+                }`}
+              />
+            </button>
           </div>
 
           <hr />

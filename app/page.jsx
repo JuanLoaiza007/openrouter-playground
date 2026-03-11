@@ -62,6 +62,8 @@ export default function Home() {
   const params = activeChat?.params || DEFAULT_PARAMS;
   const structuredOutput = params?.structured_output || null;
   const systemMessage = params?.system_message || "";
+  const useHistory =
+    params?.use_history !== undefined ? params.use_history : true;
 
   // Scroll to bottom on new messages
   useEffect(() => {
@@ -100,9 +102,18 @@ export default function Home() {
 
       // Build messages with system message if present
       const systemMessage = params.system_message;
+      const useHistory =
+        params.use_history !== undefined ? params.use_history : true;
+
+      // If useHistory is false, only send the current message
+      const historyToSend = useHistory ? messages : [];
       const messagesWithSystem = systemMessage
-        ? [{ role: "system", content: systemMessage }, ...newMessages]
-        : newMessages;
+        ? [
+            { role: "system", content: systemMessage },
+            ...historyToSend,
+            userMessage,
+          ]
+        : [...historyToSend, userMessage];
 
       console.log(
         "[handleSubmit] params.structured_output:",
@@ -230,6 +241,13 @@ export default function Home() {
     });
   };
 
+  const handleUseHistoryChange = (newUseHistory) => {
+    if (!activeChat) return;
+    updateChat(activeChat.id, {
+      params: { ...params, use_history: newUseHistory },
+    });
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -268,12 +286,14 @@ export default function Home() {
               apiKey={customApiKey}
               structuredOutput={structuredOutput}
               systemMessage={systemMessage}
+              useHistory={useHistory}
               onModelChange={handleModelChange}
               onParamChange={handleParamChange}
               onApiKeyChange={setCustomApiKey}
               onSaveApiKey={saveApiKey}
               onStructuredOutputChange={handleStructuredOutputChange}
               onSystemMessageChange={handleSystemMessageChange}
+              onUseHistoryChange={handleUseHistoryChange}
             >
               <Button
                 id="settings-btn"
