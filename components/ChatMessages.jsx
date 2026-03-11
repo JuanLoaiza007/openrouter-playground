@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Copy, Loader2 } from "lucide-react";
+import { JsonViewer } from "./JsonViewer";
 
 export function ChatMessages({
   messages,
@@ -7,6 +8,7 @@ export function ChatMessages({
   error,
   onCopy,
   isStreaming,
+  isStructuredOutput = false,
 }) {
   return (
     <div className="flex-1 overflow-y-auto p-4 space-y-4">
@@ -33,12 +35,20 @@ export function ChatMessages({
               } ${isLastMessage && isStreaming ? "streaming-message" : ""}`}
             >
               <div className="flex justify-between items-start gap-2">
-                <p className="whitespace-pre-wrap text-sm">
-                  {msg.content}
-                  {showCursor && (
-                    <span className="inline-block w-0.5 h-4 ml-0.5 bg-current animate-pulse" />
-                  )}
-                </p>
+                {/* Show JsonViewer for structured output, otherwise show regular content */}
+                {isStructuredOutput && msg.role === "assistant" ? (
+                  <JsonViewer
+                    content={msg.content}
+                    isStructuredOutput={isStructuredOutput}
+                  />
+                ) : (
+                  <p className="whitespace-pre-wrap text-sm">
+                    {msg.content}
+                    {showCursor && (
+                      <span className="inline-block w-0.5 h-4 ml-0.5 bg-current animate-pulse" />
+                    )}
+                  </p>
+                )}
                 {msg.content && (
                   <Button
                     variant="ghost"

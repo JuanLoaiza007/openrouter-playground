@@ -397,6 +397,7 @@ export default function Home() {
             loading={loading}
             error={error}
             isStreaming={loading && messages.length > 0}
+            isStructuredOutput={structuredOutput?.enabled || false}
             onCopy={(text) => navigator.clipboard.writeText(text)}
           />
 
