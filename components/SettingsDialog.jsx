@@ -1,7 +1,9 @@
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
@@ -20,12 +22,45 @@ export function SettingsDialog({
   model,
   params,
   apiKey,
+  structuredOutput,
+  systemMessage,
   onModelChange,
   onParamChange,
   onApiKeyChange,
   onSaveApiKey,
+  onStructuredOutputChange,
+  onSystemMessageChange,
   children,
 }) {
+  const [schemaInput, setSchemaInput] = useState(
+    structuredOutput?.enabled && structuredOutput?.schema
+      ? JSON.stringify(structuredOutput.schema, null, 2)
+      : '{\n  "type": "object",\n  "properties": {\n    "field": {\n      "type": "string"\n    }\n  }\n}',
+  );
+
+  // Sync schemaInput when structuredOutput prop changes
+  useEffect(() => {
+    if (structuredOutput?.enabled && structuredOutput?.schema) {
+      const newSchemaStr = JSON.stringify(structuredOutput.schema, null, 2);
+      if (newSchemaStr !== schemaInput) {
+        setSchemaInput(newSchemaStr);
+      }
+    }
+  }, [structuredOutput]);
+
+  const handleSchemaChange = (value) => {
+    setSchemaInput(value);
+    try {
+      const parsed = JSON.parse(value);
+      onStructuredOutputChange({
+        enabled: true,
+        schema: parsed,
+      });
+    } catch (e) {
+      // Invalid JSON, don't update yet
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>{children}</DialogTrigger>
@@ -33,7 +68,7 @@ export function SettingsDialog({
         <DialogHeader>
           <DialogTitle>Configuración</DialogTitle>
           <DialogDescription>
-            Ajusta el modelo, parámetros y API key
+            Ajusta el modelo, parámetros y configuración
           </DialogDescription>
         </DialogHeader>
 
@@ -74,6 +109,65 @@ export function SettingsDialog({
 
           <hr />
 
+          {/* System Message */}
+          <div className="space-y-2">
+            <Label>Instrucciones del Sistema</Label>
+            <Textarea
+              value={systemMessage || ""}
+              onChange={(e) => onSystemMessageChange(e.target.value)}
+              placeholder="Ej: Eres un asistente que responde en formato JSON..."
+              className="min-h-[80px]"
+            />
+          </div>
+
+          <hr />
+
+          {/* Structured Output */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label>Structured Output (JSON)</Label>
+              <button
+                type="button"
+                onClick={() =>
+                  onStructuredOutputChange({
+                    enabled: !structuredOutput?.enabled,
+                    schema: structuredOutput?.schema || {
+                      type: "object",
+                      properties: { field: { type: "string" } },
+                    },
+                  })
+                }
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                  structuredOutput?.enabled ? "bg-primary" : "bg-muted"
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    structuredOutput?.enabled
+                      ? "translate-x-6"
+                      : "translate-x-1"
+                  }`}
+                />
+              </button>
+            </div>
+
+            {structuredOutput?.enabled && (
+              <div className="space-y-2">
+                <Textarea
+                  value={schemaInput}
+                  onChange={(e) => handleSchemaChange(e.target.value)}
+                  placeholder='{"type": "object", "properties": {...}}'
+                  className="font-mono text-xs min-h-[120px]"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Define el esquema JSON que debe seguir la respuesta
+                </p>
+              </div>
+            )}
+          </div>
+
+          <hr />
+
           {/* Parameters */}
           <div className="space-y-2">
             <div className="flex justify-between">
@@ -89,9 +183,6 @@ export function SettingsDialog({
               max={2}
               step={0.1}
             />
-            <p className="text-xs text-muted-foreground">
-              Controla la aleatoriedad
-            </p>
           </div>
 
           <div className="space-y-2">
@@ -167,6 +258,7 @@ export function SettingsDialog({
               onParamChange("top_p", 1);
               onParamChange("presence_penalty", 0);
               onParamChange("frequency_penalty", 0);
+              onStructuredOutputChange({ enabled: false, schema: null });
             }}
             variant="outline"
           >

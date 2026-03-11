@@ -10,7 +10,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useChats } from "@/lib/hooks";
 import { useTheme } from "@/lib/useTheme";
-import { sendMessageStream, exportChat, exportConfig } from "@/lib/api";
+import {
+  sendMessage,
+  sendMessageStream,
+  exportChat,
+  exportConfig,
+} from "@/lib/api";
 import { DEFAULT_MODEL, DEFAULT_PARAMS } from "@/lib/constants";
 import { Loader2, Send, Download, Settings, Trash2 } from "lucide-react";
 
@@ -55,6 +60,8 @@ export default function Home() {
   const messages = activeChat?.messages || [];
   const model = activeChat?.model || DEFAULT_MODEL;
   const params = activeChat?.params || DEFAULT_PARAMS;
+  const structuredOutput = params?.structured_output || null;
+  const systemMessage = params?.system_message || "";
 
   // Scroll to bottom on new messages
   useEffect(() => {
@@ -85,32 +92,67 @@ export default function Home() {
     setError(null);
 
     try {
-      // Add placeholder for assistant message
-      const placeholderMessage = { role: "assistant", content: "" };
-      updateChat(activeChat.id, {
-        messages: [...newMessages, placeholderMessage],
-      });
+      // Check if structured output is enabled
+      const hasStructuredOutput =
+        params.structured_output &&
+        params.structured_output.enabled &&
+        params.structured_output.schema;
 
-      let finalContent = "";
+      // Build messages with system message if present
+      const systemMessage = params.system_message;
+      const messagesWithSystem = systemMessage
+        ? [{ role: "system", content: systemMessage }, ...newMessages]
+        : newMessages;
 
-      await sendMessageStream(
-        newMessages,
-        model,
-        {
+      console.log(
+        "[handleSubmit] params.structured_output:",
+        params.structured_output,
+      );
+      console.log("[handleSubmit] hasStructuredOutput:", hasStructuredOutput);
+
+      if (hasStructuredOutput) {
+        // Structured output requires non-streaming
+        const response = await sendMessage(messagesWithSystem, model, {
           temperature: params.temperature,
           max_tokens: params.max_tokens,
           top_p: params.top_p,
           presence_penalty: params.presence_penalty,
           frequency_penalty: params.frequency_penalty,
-        },
-        (content) => {
-          finalContent = content;
-          // Update message incrementally for streaming effect
-          updateChat(activeChat.id, {
-            messages: [...newMessages, { role: "assistant", content }],
-          });
-        },
-      );
+          structured_output: params.structured_output,
+        });
+
+        const content = response.content;
+        updateChat(activeChat.id, {
+          messages: [...newMessages, { role: "assistant", content }],
+        });
+      } else {
+        // Add placeholder for streaming response
+        const placeholderMessage = { role: "assistant", content: "" };
+        updateChat(activeChat.id, {
+          messages: [...newMessages, placeholderMessage],
+        });
+
+        let finalContent = "";
+
+        // Streaming for normal messages
+        await sendMessageStream(
+          messagesWithSystem,
+          model,
+          {
+            temperature: params.temperature,
+            max_tokens: params.max_tokens,
+            top_p: params.top_p,
+            presence_penalty: params.presence_penalty,
+            frequency_penalty: params.frequency_penalty,
+          },
+          (content) => {
+            finalContent = content;
+            updateChat(activeChat.id, {
+              messages: [...newMessages, { role: "assistant", content }],
+            });
+          },
+        );
+      }
 
       if (messages.length === 0) {
         const title =
@@ -170,6 +212,24 @@ export default function Home() {
     updateChat(activeChat.id, { params: { ...params, [key]: value } });
   };
 
+  const handleStructuredOutputChange = (newStructuredOutput) => {
+    console.log(
+      "[handleStructuredOutputChange] new value:",
+      newStructuredOutput,
+    );
+    if (!activeChat) return;
+    updateChat(activeChat.id, {
+      params: { ...params, structured_output: newStructuredOutput },
+    });
+  };
+
+  const handleSystemMessageChange = (newSystemMessage) => {
+    if (!activeChat) return;
+    updateChat(activeChat.id, {
+      params: { ...params, system_message: newSystemMessage },
+    });
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -206,10 +266,14 @@ export default function Home() {
               model={model}
               params={params}
               apiKey={customApiKey}
+              structuredOutput={structuredOutput}
+              systemMessage={systemMessage}
               onModelChange={handleModelChange}
               onParamChange={handleParamChange}
               onApiKeyChange={setCustomApiKey}
               onSaveApiKey={saveApiKey}
+              onStructuredOutputChange={handleStructuredOutputChange}
+              onSystemMessageChange={handleSystemMessageChange}
             >
               <Button
                 id="settings-btn"
